@@ -1,47 +1,36 @@
 const express = require('express');
-const Groq = require('groq-sdk');
-const path = require('path');
 const app = express();
-
-app.use(express.static('public'));
 app.use(express.json());
 
-let groq;
+// Clave secreta (cámbiala por una clave única)
+const SECRET_KEY = "mi_clave_secreta";
 
-app.post('/setup', (req, res) => {
-  const { apiKey } = req.body;
-  if (!apiKey) {
-    return res.status(400).json({ status: false, message: "Debes proporcionar una clave API." });
-  }
+// Almacenamiento temporal de registros
+let registros = [];
 
-  groq = new Groq({ apiKey });
-  res.json({ status: true, message: "Clave API guardada correctamente." });
+// Endpoint para recibir datos de Bot1
+app.post('/registro', (req, res) => {
+    const { nombre } = req.body;
+
+    // Validar el nombre
+    if (!nombre || typeof nombre !== 'string' || nombre.length > 50) {
+        return res.status(400).send('Nombre no válido');
+    }
+
+    // Guardar el registro
+    registros.push({ nombre, fecha: new Date().toLocaleString() });
+    res.status(200).send('Registro recibido');
 });
 
-app.get('/chat', async (req, res) => {
-  const inputText = req.query.text;
-
-  if (!groq) {
-    return res.status(500).json({ status: false, message: "La clave API no ha sido configurada." });
-  }
-
-  if (!inputText) {
-    return res.status(400).json({ status: false, message: "Debes especificar un texto para usar la IA." });
-  }
-
-  try {
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [{ role: "user", content: inputText }],
-      model: "llama3-8b-8192",
-    });
-
-    res.json(chatCompletion.choices[0]?.message?.content || "");
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Error interno del servidor');
-  }
+// Endpoint para que Bot2 obtenga nuevos registros
+app.get('/nuevos-registros', (req, res) => {
+    // Enviar los registros y limpiar la lista
+    res.status(200).json(registros);
+    registros = []; // Limpiar la lista después de enviarla
 });
 
-app.listen(3000, () => {
-  console.log("Servidor iniciado en http://localhost:3000");
+// Iniciar el servidor
+const PORT = 3000;
+app.listen(PORT, () => {
+    console.log(`Servidor escuchando en el puerto ${PORT}`);
 });
