@@ -2,9 +2,6 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 
-// Clave secreta (cámbiala por una clave única)
-const SECRET_KEY = "mi_clave_secreta";
-
 // Almacenamiento temporal de registros
 let registros = [];
 
@@ -30,7 +27,7 @@ app.get('/nuevos-registros', (req, res) => {
 });
 
 // Iniciar el servidor
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor escuchando en el puerto ${PORT}`);
 });
